@@ -1,0 +1,32 @@
+---
+- name: Install python3, java, jenkins
+  hosts: ec2
+  become: true
+
+  tasks:
+  - name: update apt package
+    apt:
+      update_cache: yes
+      
+
+  - name: Install Java Sdk
+    apt:
+      name: openjdk-11-jdk
+      state: present
+    become: yes
+
+  - name: Add jenkins key
+      shell: wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | apt-key add -
+
+
+  - name: Add jenkins repo
+    become: yes
+    apt_repo:
+         repo: deb http://pkg.jenkins.io/debian-stable binary/
+
+  - name: Install Jenkins
+    become: yes
+    apt:
+      name: jenkins
+
+  
