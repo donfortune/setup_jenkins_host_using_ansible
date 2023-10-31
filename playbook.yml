@@ -40,4 +40,26 @@
       port: 8080
       timeout: 300
 
+  - name: Install Docker
+    apt:
+      name: docker.io
+      state: present
+    become: yes
+
+  - name: Add user to the docker group
+    user:
+      name: "{{ ansible_user }}"
+      groups: docker
+      append: yes
+    tags: docker
+  
+
+  - name: Create a new user and add to sudo group
+    user:
+      name: "{{ ansible_user }}"
+      state: present
+      groups: sudo
+    become: yes
+
+
   

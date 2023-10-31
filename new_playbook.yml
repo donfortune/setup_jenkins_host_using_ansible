@@ -1,0 +1,55 @@
+---
+- name: Install Jenkins using Docker
+  hosts: ec2
+  become: yes
+
+  tasks:
+    - name: Update APT package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Run Jenkins Docker Container
+      docker_container:
+        name: jenkins
+        image: jenkins/jenkins:lts
+        state: started
+        restart_policy: always
+        ports:
+          - "8083:8080"
+          - "50002:50000"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - jenkins_home:/var/jenkins_home
+
+    - name: Set permission for Docker socket
+      file:
+        path: /var/run/docker.sock
+        owner: jenkins
+        group: docker
+        mode: "0660"
+
+    - name: Wait for Jenkins to start
+      wait_for:
+        host: localhost
+        port: 8080
+        state: started
+      delegate_to: localhost
+
+    - name: Print Docker Container ID
+      command: docker ps -qf "name=jenkins"
+      register: jenkins_container_id
+
+    - name: Debug Container ID
+      debug:
+        var: jenkins_container_id.stdout
+
+    - name: Access the Jenkins Container
+      command: docker exec -it --user root {{ jenkins_container_id.stdout }} bash
+      become: yes
+      become_user: jenkins
+      when: jenkins_container_id.stdout is defined
