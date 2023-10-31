@@ -15,18 +15,29 @@
       state: present
     become: yes
 
-  - name: Add jenkins key
-      shell: wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | apt-key add -
+  - name : Add jenkins key
+    shell : wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
 
 
-  - name: Add jenkins repo
+  - name : Add jenkins repo
     become: yes
-    apt_repo:
+    apt_repository:
          repo: deb http://pkg.jenkins.io/debian-stable binary/
 
   - name: Install Jenkins
     become: yes
     apt:
       name: jenkins
+
+  - name: Start Jenkins service
+    service:
+      name: jenkins
+      state: started
+      enabled: yes
+
+  - name: Wait for Jenkins to start
+    wait_for:
+      port: 8080
+      timeout: 300
 
   
