@@ -1,6 +1,9 @@
 [ec2]
-3.92.63.195
+54.80.198.78
 
 [ec2:vars]
 ansible_ssh_private_key_file=/Users/mac/aws_key/new_mac_key.pem
 ansible_user=ubuntu
+
+forks 1
+host key checking

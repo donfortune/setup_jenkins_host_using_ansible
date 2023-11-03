@@ -1,5 +1,5 @@
 ---
-- name: Install Jenkins using Docker
+- name: Install Jenkins and Docker
   hosts: ec2
   become: yes
 
@@ -7,6 +7,12 @@
     - name: Update APT package cache
       apt:
         update_cache: yes
+
+    - name: Install Java Sdk
+      apt:
+        name: openjdk-11-jdk
+        state: present
+    
 
     - name: Install Docker
       apt:
@@ -20,36 +26,27 @@
         state: started
         restart_policy: always
         ports:
-          - "8083:8080"
-          - "50002:50000"
+          - "8080:8080"
+          - "50000:50000"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
           - jenkins_home:/var/jenkins_home
 
-    - name: Set permission for Docker socket
-      file:
-        path: /var/run/docker.sock
-        owner: jenkins
-        group: docker
-        mode: "0660"
+    - name: Install Docker inside Jenkins container
+      command: docker run -d --name try-docker -v /var/run/docker.sock:/var/run/docker.sock docker:latest
 
-    - name: Wait for Jenkins to start
-      wait_for:
-        host: localhost
-        port: 8080
-        state: started
-      delegate_to: localhost
+   
+    - name: Install Docker on Jenkins Agent
+      apt:
+        name: docker.io
+        state: present
 
-    - name: Print Docker Container ID
-      command: docker ps -qf "name=jenkins"
-      register: jenkins_container_id
+    - name: Get initial admin password
+      command: docker exec -it jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+      register: initial_admin_password
 
-    - name: Debug Container ID
+    - name: Display initial admin password
       debug:
-        var: jenkins_container_id.stdout
+        var: initial_admin_password.stdout
 
-    - name: Access the Jenkins Container
-      command: docker exec -it --user root {{ jenkins_container_id.stdout }} bash
-      become: yes
-      become_user: jenkins
-      when: jenkins_container_id.stdout is defined
+    
